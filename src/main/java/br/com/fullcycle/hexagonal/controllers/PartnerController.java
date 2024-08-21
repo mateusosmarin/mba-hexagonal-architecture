@@ -37,13 +37,12 @@ public class PartnerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable Long id) {
-        var partner = partnerService.findById(id);
-        if (partner.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(partner.get());
+    public ResponseEntity<?> get(@PathVariable final Long id) {
+        final var useCase = new GetPartnerByIdUseCase(partnerService);
+        final var input = new GetPartnerByIdUseCase.Input(id);
+        return useCase.execute(input)
+                .map(ResponseEntity::ok)
+                .orElseGet(ResponseEntity.notFound()::build);
     }
 
 }
