@@ -1,24 +1,32 @@
 package br.com.fullcycle.hexagonal.controllers;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
+import br.com.fullcycle.hexagonal.application.usecases.CreateEventUseCase;
 import br.com.fullcycle.hexagonal.dtos.EventDTO;
 import br.com.fullcycle.hexagonal.dtos.SubscribeDTO;
-import br.com.fullcycle.hexagonal.models.Event;
 import br.com.fullcycle.hexagonal.models.Ticket;
 import br.com.fullcycle.hexagonal.models.TicketStatus;
 import br.com.fullcycle.hexagonal.services.CustomerService;
 import br.com.fullcycle.hexagonal.services.EventService;
 import br.com.fullcycle.hexagonal.services.PartnerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
-import static org.springframework.http.HttpStatus.CREATED;
-
+// Adapter
 @RestController
 @RequestMapping(value = "events")
 public class EventController {
@@ -34,48 +42,46 @@ public class EventController {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    public Event create(@RequestBody EventDTO dto) {
-        var event = new Event();
-        event.setDate(LocalDate.parse(dto.getDate(), DateTimeFormatter.ISO_DATE));
-        event.setName(dto.getName());
-        event.setTotalSpots(dto.getTotalSpots());
-
-        var partner = partnerService.findById(dto.getPartner().getId());
-        if (partner.isEmpty()) {
-            throw new RuntimeException("Partner not found");
+    public ResponseEntity<?> create(@RequestBody final EventDTO dto) {
+        try {
+            final var useCase = new CreateEventUseCase(eventService, partnerService);
+            final var partnerId = Objects.requireNonNull(dto.getPartner(), "Partner is required").getId();
+            final var input = new CreateEventUseCase.Input(
+                    dto.getDate(), dto.getName(), partnerId, dto.getTotalSpots());
+            final var output = useCase.execute(input);
+            return ResponseEntity.created(URI.create("/events/" + output.id())).body(output);
+        } catch (final ValidationException ex) {
+            return ResponseEntity.unprocessableEntity().body(ex.getMessage());
         }
-        event.setPartner(partner.get());
-
-        return eventService.save(event);
     }
 
     @Transactional
     @PostMapping(value = "/{id}/subscribe")
-    public ResponseEntity<?> subscribe(@PathVariable Long id, @RequestBody SubscribeDTO dto) {
+    public ResponseEntity<?> subscribe(@PathVariable final Long id, @RequestBody final SubscribeDTO dto) {
 
-        var maybeCustomer = customerService.findById(dto.getCustomerId());
+        final var maybeCustomer = customerService.findById(dto.getCustomerId());
         if (maybeCustomer.isEmpty()) {
             return ResponseEntity.unprocessableEntity().body("Customer not found");
         }
 
-        var maybeEvent = eventService.findById(id);
+        final var maybeEvent = eventService.findById(id);
         if (maybeEvent.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        var maybeTicket = eventService.findTicketByEventIdAndCustomerId(id, dto.getCustomerId());
+        final var maybeTicket = eventService.findTicketByEventIdAndCustomerId(id, dto.getCustomerId());
         if (maybeTicket.isPresent()) {
             return ResponseEntity.unprocessableEntity().body("Email already registered");
         }
 
-        var customer = maybeCustomer.get();
-        var event = maybeEvent.get();
+        final var customer = maybeCustomer.get();
+        final var event = maybeEvent.get();
 
         if (event.getTotalSpots() < event.getTickets().size() + 1) {
             throw new RuntimeException("Event sold out");
         }
 
-        var ticket = new Ticket();
+        final var ticket = new Ticket();
         ticket.setEvent(event);
         ticket.setCustomer(customer);
         ticket.setReservedAt(Instant.now());
