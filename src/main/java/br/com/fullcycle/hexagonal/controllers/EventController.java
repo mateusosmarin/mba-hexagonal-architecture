@@ -3,7 +3,6 @@ package br.com.fullcycle.hexagonal.controllers;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 import br.com.fullcycle.hexagonal.application.usecases.CreateEventUseCase;
+import br.com.fullcycle.hexagonal.application.usecases.SubscribeCustomerToEventUseCase;
 import br.com.fullcycle.hexagonal.dtos.EventDTO;
 import br.com.fullcycle.hexagonal.dtos.SubscribeDTO;
-import br.com.fullcycle.hexagonal.models.Ticket;
-import br.com.fullcycle.hexagonal.models.TicketStatus;
 import br.com.fullcycle.hexagonal.services.CustomerService;
 import br.com.fullcycle.hexagonal.services.EventService;
 import br.com.fullcycle.hexagonal.services.PartnerService;
@@ -58,39 +56,13 @@ public class EventController {
     @Transactional
     @PostMapping(value = "/{id}/subscribe")
     public ResponseEntity<?> subscribe(@PathVariable final Long id, @RequestBody final SubscribeDTO dto) {
-
-        final var maybeCustomer = customerService.findById(dto.getCustomerId());
-        if (maybeCustomer.isEmpty()) {
-            return ResponseEntity.unprocessableEntity().body("Customer not found");
+        try {
+            final var useCase = new SubscribeCustomerToEventUseCase(customerService, eventService);
+            final var input = new SubscribeCustomerToEventUseCase.Input(id, dto.getCustomerId());
+            final var output = useCase.execute(input);
+            return ResponseEntity.ok(output);
+        } catch (final ValidationException ex) {
+            return ResponseEntity.unprocessableEntity().body(ex.getMessage());
         }
-
-        final var maybeEvent = eventService.findById(id);
-        if (maybeEvent.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        final var maybeTicket = eventService.findTicketByEventIdAndCustomerId(id, dto.getCustomerId());
-        if (maybeTicket.isPresent()) {
-            return ResponseEntity.unprocessableEntity().body("Email already registered");
-        }
-
-        final var customer = maybeCustomer.get();
-        final var event = maybeEvent.get();
-
-        if (event.getTotalSpots() < event.getTickets().size() + 1) {
-            throw new RuntimeException("Event sold out");
-        }
-
-        final var ticket = new Ticket();
-        ticket.setEvent(event);
-        ticket.setCustomer(customer);
-        ticket.setReservedAt(Instant.now());
-        ticket.setStatus(TicketStatus.PENDING);
-
-        event.getTickets().add(ticket);
-
-        eventService.save(event);
-
-        return ResponseEntity.ok(new EventDTO(event));
     }
 }
