@@ -5,9 +5,9 @@ import java.time.format.DateTimeFormatter;
 
 import br.com.fullcycle.hexagonal.application.UseCase;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
-import br.com.fullcycle.hexagonal.models.Event;
-import br.com.fullcycle.hexagonal.services.EventService;
-import br.com.fullcycle.hexagonal.services.PartnerService;
+import br.com.fullcycle.hexagonal.infrastructure.models.Event;
+import br.com.fullcycle.hexagonal.infrastructure.services.EventService;
+import br.com.fullcycle.hexagonal.infrastructure.services.PartnerService;
 
 public class CreateEventUseCase extends UseCase<CreateEventUseCase.Input, CreateEventUseCase.Output> {
     public record Input(String date, String name, Long partnerId, Integer totalSpots) {

@@ -12,10 +12,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
-import br.com.fullcycle.hexagonal.models.Event;
-import br.com.fullcycle.hexagonal.models.Partner;
-import br.com.fullcycle.hexagonal.services.EventService;
-import br.com.fullcycle.hexagonal.services.PartnerService;
+import br.com.fullcycle.hexagonal.infrastructure.models.Event;
+import br.com.fullcycle.hexagonal.infrastructure.models.Partner;
+import br.com.fullcycle.hexagonal.infrastructure.services.EventService;
+import br.com.fullcycle.hexagonal.infrastructure.services.PartnerService;
 import io.hypersistence.tsid.TSID;
 
 class CreateEventUseCaseTest {
