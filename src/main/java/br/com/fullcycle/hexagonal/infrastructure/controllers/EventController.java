@@ -3,7 +3,6 @@ package br.com.fullcycle.hexagonal.infrastructure.controllers;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
-import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 import br.com.fullcycle.hexagonal.application.usecases.CreateEventUseCase;
 import br.com.fullcycle.hexagonal.application.usecases.SubscribeCustomerToEventUseCase;
-import br.com.fullcycle.hexagonal.infrastructure.dtos.EventDTO;
+import br.com.fullcycle.hexagonal.infrastructure.dtos.CreateEventDTO;
 import br.com.fullcycle.hexagonal.infrastructure.dtos.SubscribeDTO;
 
 // Adapter
@@ -36,11 +35,9 @@ public class EventController {
 
     @PostMapping
     @ResponseStatus(CREATED)
-    public ResponseEntity<?> create(@RequestBody final EventDTO dto) {
+    public ResponseEntity<?> create(@RequestBody final CreateEventDTO dto) {
         try {
-            final var partnerId = Objects.requireNonNull(dto.getPartner(), "Partner is required").getId();
-            final var input = new CreateEventUseCase.Input(
-                    dto.getDate(), dto.getName(), partnerId, dto.getTotalSpots());
+            final var input = new CreateEventUseCase.Input(dto.date(), dto.name(), dto.partnerId(), dto.totalSpots());
             final var output = createEventUseCase.execute(input);
             return ResponseEntity.created(URI.create("/events/" + output.id())).body(output);
         } catch (final ValidationException ex) {
@@ -52,7 +49,7 @@ public class EventController {
     @PostMapping(value = "/{id}/subscribe")
     public ResponseEntity<?> subscribe(@PathVariable final Long id, @RequestBody final SubscribeDTO dto) {
         try {
-            final var input = new SubscribeCustomerToEventUseCase.Input(id, dto.getCustomerId());
+            final var input = new SubscribeCustomerToEventUseCase.Input(id, dto.customerId());
             final var output = subscribeCustomerToEventUseCase.execute(input);
             return ResponseEntity.ok(output);
         } catch (final ValidationException ex) {

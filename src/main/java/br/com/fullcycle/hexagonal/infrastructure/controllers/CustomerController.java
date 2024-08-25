@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 import br.com.fullcycle.hexagonal.application.usecases.CreateCustomerUseCase;
 import br.com.fullcycle.hexagonal.application.usecases.GetCustomerByIdUseCase;
-import br.com.fullcycle.hexagonal.infrastructure.dtos.CustomerDTO;
+import br.com.fullcycle.hexagonal.infrastructure.dtos.CreateCustomerDTO;
 
 // Adapter
 @RestController
@@ -30,9 +30,9 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody final CustomerDTO dto) {
+    public ResponseEntity<?> create(@RequestBody final CreateCustomerDTO dto) {
         try {
-            final var input = new CreateCustomerUseCase.Input(dto.getCpf(), dto.getEmail(), dto.getName());
+            final var input = new CreateCustomerUseCase.Input(dto.cpf(), dto.email(), dto.name());
             final var output = createCustomerUseCase.execute(input);
             return ResponseEntity.created(URI.create("/customers/" + output.id())).body(output);
         } catch (final ValidationException ex) {
