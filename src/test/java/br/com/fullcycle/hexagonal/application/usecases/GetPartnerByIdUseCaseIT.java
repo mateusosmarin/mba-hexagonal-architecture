@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import br.com.fullcycle.hexagonal.IntegrationTest;
-import br.com.fullcycle.hexagonal.infrastructure.models.Partner;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.PartnerRepository;
+import br.com.fullcycle.hexagonal.application.domain.Partner;
+import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
 
 class GetPartnerByIdUseCaseIT extends IntegrationTest {
     @Autowired
@@ -28,11 +28,11 @@ class GetPartnerByIdUseCaseIT extends IntegrationTest {
     @DisplayName("Deve obter um parceiro por id")
     public void testGetById() {
         // given
-        final var expectedCNPJ = "41536538000100";
+        final var expectedCNPJ = "12.345.678/0001-00";
         final var expectedEmail = "john.doe@gmail.com";
         final var expectedName = "John Doe";
         final var partner = createPartner(expectedCNPJ, expectedEmail, expectedName);
-        final var expectedId = partner.getId();
+        final var expectedId = partner.id().value();
 
         final var input = new GetPartnerByIdUseCase.Input(expectedId);
 
@@ -50,7 +50,7 @@ class GetPartnerByIdUseCaseIT extends IntegrationTest {
     @DisplayName("Deve obter vazio ao tentar recuperar um parceiro não existente por id")
     public void testGetByIdWithInvalidId() {
         // given
-        final var expectedId = UUID.randomUUID().getMostSignificantBits();
+        final var expectedId = UUID.randomUUID().toString();
 
         final var input = new GetPartnerByIdUseCase.Input(expectedId);
 
@@ -62,10 +62,6 @@ class GetPartnerByIdUseCaseIT extends IntegrationTest {
     }
 
     private Partner createPartner(final String cnpj, final String email, final String name) {
-        final var partner = new Partner();
-        partner.setCnpj(cnpj);
-        partner.setEmail(email);
-        partner.setName(name);
-        return partnerRepository.save(partner);
+        return partnerRepository.create(Partner.newPartner(name, cnpj, email));
     }
 }

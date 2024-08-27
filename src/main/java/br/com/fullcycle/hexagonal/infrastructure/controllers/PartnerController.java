@@ -40,7 +40,7 @@ public class PartnerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable final Long id) {
+    public ResponseEntity<?> get(@PathVariable final String id) {
         final var input = new GetPartnerByIdUseCase.Input(id);
         return getPartnerByIdUseCase.execute(input)
                 .map(ResponseEntity::ok)

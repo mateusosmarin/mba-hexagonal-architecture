@@ -1,41 +1,44 @@
 package br.com.fullcycle.hexagonal.application.usecases;
 
-import static org.mockito.Mockito.when;
-
-import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-import br.com.fullcycle.hexagonal.infrastructure.models.Partner;
-import br.com.fullcycle.hexagonal.infrastructure.services.PartnerService;
+import br.com.fullcycle.hexagonal.application.domain.Partner;
+import br.com.fullcycle.hexagonal.application.repositories.InMemoryPartnerRepository;
+import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
 
 class GetPartnerByIdUseCaseTest {
+    private GetPartnerByIdUseCase useCase;
+    private PartnerRepository partnerRepository;
+
+    GetPartnerByIdUseCaseTest() {
+        partnerRepository = new InMemoryPartnerRepository();
+        useCase = new GetPartnerByIdUseCase(partnerRepository);
+    }
+
+    @AfterEach
+    void tearDown() {
+        partnerRepository.deleteAll();
+    }
+
     @Test
     @DisplayName("Deve obter um parceiro por id")
     public void testGetById() {
         // given
-        final var expectedId = UUID.randomUUID().getMostSignificantBits();
-        final var expectedCNPJ = "41536538000100";
+        final var expectedCNPJ = "12.345.678/0001-00";
         final var expectedEmail = "john.doe@gmail.com";
         final var expectedName = "John Doe";
 
-        final var aPartner = new Partner();
-        aPartner.setId(expectedId);
-        aPartner.setCnpj(expectedCNPJ);
-        aPartner.setEmail(expectedEmail);
-        aPartner.setName(expectedName);
+        final var aPartner = partnerRepository.create(Partner.newPartner(expectedName, expectedCNPJ, expectedEmail));
+        final var expectedId = aPartner.id().value();
 
         final var input = new GetPartnerByIdUseCase.Input(expectedId);
 
         // when
-        final var partnerService = Mockito.mock(PartnerService.class);
-        when(partnerService.findById(expectedId)).thenReturn(Optional.of(aPartner));
-
-        final var useCase = new GetPartnerByIdUseCase(partnerService);
         final var output = useCase.execute(input).get();
 
         // then
@@ -50,15 +53,11 @@ class GetPartnerByIdUseCaseTest {
     @DisplayName("Deve obter vazio ao tentar recuperar um parceiro não existente por id")
     public void testGetByIdWithInvalidId() {
         // given
-        final var expectedId = UUID.randomUUID().getMostSignificantBits();
+        final var expectedId = UUID.randomUUID().toString();
 
         final var input = new GetPartnerByIdUseCase.Input(expectedId);
 
         // when
-        final var partnerService = Mockito.mock(PartnerService.class);
-        when(partnerService.findById(expectedId)).thenReturn(Optional.empty());
-
-        final var useCase = new GetPartnerByIdUseCase(partnerService);
         final var output = useCase.execute(input);
 
         // then

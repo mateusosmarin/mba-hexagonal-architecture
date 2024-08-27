@@ -1,8 +1,5 @@
 package br.com.fullcycle.hexagonal.application.usecases;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,16 +9,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.fullcycle.hexagonal.IntegrationTest;
+import br.com.fullcycle.hexagonal.application.domain.Customer;
+import br.com.fullcycle.hexagonal.application.domain.CustomerId;
+import br.com.fullcycle.hexagonal.application.domain.Event;
+import br.com.fullcycle.hexagonal.application.domain.EventId;
+import br.com.fullcycle.hexagonal.application.domain.Partner;
+import br.com.fullcycle.hexagonal.application.domain.TicketStatus;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
-import br.com.fullcycle.hexagonal.infrastructure.models.Customer;
-import br.com.fullcycle.hexagonal.infrastructure.models.Event;
-import br.com.fullcycle.hexagonal.infrastructure.models.Partner;
-import br.com.fullcycle.hexagonal.infrastructure.models.TicketStatus;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.CustomerRepository;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.EventRepository;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.PartnerRepository;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.TicketRepository;
-import io.hypersistence.tsid.TSID;
+import br.com.fullcycle.hexagonal.application.repositories.CustomerRepository;
+import br.com.fullcycle.hexagonal.application.repositories.EventRepository;
+import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
+import br.com.fullcycle.hexagonal.application.repositories.TicketRepository;
 
 class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
     @Autowired
@@ -45,8 +43,8 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
 
     @BeforeEach
     void setUp() {
-        customer = createCustomer("12345678901", "john.doe@gmail.com", "John Doe");
-        partner = createPartner("41536538000100", "disney@gmail.com", "Disney");
+        customer = createCustomer("123.456.789-01", "john.doe@gmail.com", "John Doe");
+        partner = createPartner("12.345.678/0001-00", "disney@gmail.com", "Disney");
         event = createEvent("2024-08-24", "Frozen", partner, 10);
     }
 
@@ -63,8 +61,8 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
     @DisplayName("Deve comprar um ticket de um evento")
     public void testReserveTicket() throws Exception {
         // given
-        final var customerId = customer.getId();
-        final var eventId = event.getId();
+        final var customerId = customer.id().value();
+        final var eventId = event.id().value();
 
         final var input = new SubscribeCustomerToEventUseCase.Input(eventId, customerId);
 
@@ -83,8 +81,8 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
         // given
         final var expectedError = "Event not found";
 
-        final var customerId = customer.getId();
-        final var eventId = TSID.fast().toLong();
+        final var customerId = customer.id().value();
+        final var eventId = EventId.unique().value();
 
         final var input = new SubscribeCustomerToEventUseCase.Input(eventId, customerId);
 
@@ -101,8 +99,8 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
         // given
         final var expectedError = "Customer not found";
 
-        final var customerId = TSID.fast().toLong();
-        final var eventId = event.getId();
+        final var customerId = CustomerId.unique().value();
+        final var eventId = event.id().value();
 
         final var input = new SubscribeCustomerToEventUseCase.Input(eventId, customerId);
 
@@ -120,8 +118,8 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
         // given
         final var expectedError = "Email already registered";
 
-        final var customerId = customer.getId();
-        final var eventId = event.getId();
+        final var customerId = customer.id().value();
+        final var eventId = event.id().value();
 
         final var input = new SubscribeCustomerToEventUseCase.Input(eventId, customerId);
 
@@ -140,12 +138,12 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
         // given
         final var expectedError = "Event sold out";
 
-        final var customerId = customer.getId();
-        final var eventId = event.getId();
+        event = createEvent("2024-08-24", "Frozen", partner, 0);
+
+        final var eventId = event.id().value();
+        final var customerId = customer.id().value();
 
         final var input = new SubscribeCustomerToEventUseCase.Input(eventId, customerId);
-
-        event.setTotalSpots(event.getTickets().size());
 
         // when
         final var actualException = Assertions.assertThrows(ValidationException.class, () -> useCase.execute(input));
@@ -155,27 +153,14 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
     }
 
     private Customer createCustomer(final String cpf, final String email, final String name) {
-        final var customer = new Customer();
-        customer.setCpf(cpf);
-        customer.setEmail(email);
-        customer.setName(name);
-        return customerRepository.save(customer);
+        return customerRepository.create(Customer.newCustomer(name, cpf, email));
     }
 
     private Partner createPartner(final String cnpj, final String email, final String name) {
-        final var partner = new Partner();
-        partner.setCnpj(cnpj);
-        partner.setEmail(email);
-        partner.setName(name);
-        return partnerRepository.save(partner);
+        return partnerRepository.create(Partner.newPartner(name, cnpj, email));
     }
 
-    private Event createEvent(final String date, final String name, final Partner partner, final int totalSpots) {
-        final var event = new Event();
-        event.setDate(LocalDate.parse(date, DateTimeFormatter.ISO_DATE));
-        event.setName(name);
-        event.setPartner(partner);
-        event.setTotalSpots(totalSpots);
-        return eventRepository.save(event);
+    private Event createEvent(final String date, final String name, final Partner partner, final Integer totalSpots) {
+        return eventRepository.create(Event.newEvent(name, date, totalSpots, partner));
     }
 }

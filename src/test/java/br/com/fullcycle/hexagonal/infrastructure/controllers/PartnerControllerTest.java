@@ -1,11 +1,9 @@
 package br.com.fullcycle.hexagonal.infrastructure.controllers;
 
-import br.com.fullcycle.hexagonal.application.usecases.CreatePartnerUseCase;
-import br.com.fullcycle.hexagonal.application.usecases.GetPartnerByIdUseCase;
-import br.com.fullcycle.hexagonal.infrastructure.dtos.CreatePartnerDTO;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.PartnerRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,10 +13,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
+import br.com.fullcycle.hexagonal.application.usecases.CreatePartnerUseCase;
+import br.com.fullcycle.hexagonal.application.usecases.GetPartnerByIdUseCase;
+import br.com.fullcycle.hexagonal.infrastructure.dtos.CreatePartnerDTO;
+
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
-public class PartnerControllerTest {
+class PartnerControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -37,7 +42,7 @@ public class PartnerControllerTest {
     @Test
     @DisplayName("Deve criar um parceiro")
     public void testCreate() throws Exception {
-        var partner = new CreatePartnerDTO("41536538000100", "john.doe@gmail.com", "John Doe");
+        var partner = new CreatePartnerDTO("12.345.678/0001-00", "john.doe@gmail.com", "John Doe");
 
         final var result = this.mvc.perform(
                 MockMvcRequestBuilders.post("/partners")
@@ -45,7 +50,7 @@ public class PartnerControllerTest {
                         .content(mapper.writeValueAsString(partner)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNumber())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsByteArray();
 
         var actualResponse = mapper.readValue(result, CreatePartnerUseCase.Output.class);
@@ -57,7 +62,7 @@ public class PartnerControllerTest {
     @Test
     @DisplayName("Não deve cadastrar um parceiro com CNPJ duplicado")
     public void testCreateWithDuplicatedCPFShouldFail() throws Exception {
-        var partner = new CreatePartnerDTO("41536538000100", "john.doe@gmail.com", "John Doe");
+        var partner = new CreatePartnerDTO("12.345.678/0001-00", "john.doe@gmail.com", "John Doe");
 
         // Cria o primeiro parceiro
         this.mvc.perform(
@@ -66,12 +71,12 @@ public class PartnerControllerTest {
                         .content(mapper.writeValueAsString(partner)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNumber())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsByteArray();
 
-        partner = new CreatePartnerDTO("41536538000100", "john.doe2@gmail.com", "John Doe");
+        partner = new CreatePartnerDTO("12.345.678/0001-00", "john.doe@hotmail.com", "John Doe");
 
-        // Tenta criar o segundo parceiro com o mesmo CPF
+        // Tenta criar o segundo parceiro com o mesmo CNPJ
         this.mvc.perform(
                 MockMvcRequestBuilders.post("/partners")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +88,7 @@ public class PartnerControllerTest {
     @Test
     @DisplayName("Não deve cadastrar um parceiro com e-mail duplicado")
     public void testCreateWithDuplicatedEmailShouldFail() throws Exception {
-        var partner = new CreatePartnerDTO("41536538000100", "john.doe@gmail.com", "John Doe");
+        var partner = new CreatePartnerDTO("12.345.678/0001-00", "john.doe@gmail.com", "John Doe");
 
         // Cria o primeiro parceiro
         this.mvc.perform(
@@ -92,10 +97,10 @@ public class PartnerControllerTest {
                         .content(mapper.writeValueAsString(partner)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNumber())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsByteArray();
 
-        partner = new CreatePartnerDTO("41536538000101", "john.doe@gmail.com", "John Doe");
+        partner = new CreatePartnerDTO("12.345.678/0001-01", "john.doe@gmail.com", "John Doe");
 
         // Tenta criar o segundo parceiro com o mesmo e-mail
         this.mvc.perform(
@@ -109,7 +114,7 @@ public class PartnerControllerTest {
     @Test
     @DisplayName("Deve obter um parceiro por id")
     public void testGet() throws Exception {
-        var partner = new CreatePartnerDTO("41536538000100", "john.doe@gmail.com", "John Doe");
+        var partner = new CreatePartnerDTO("12.345.678/0001-00", "john.doe@gmail.com", "John Doe");
 
         final var createResult = this.mvc.perform(
                 MockMvcRequestBuilders.post("/partners")

@@ -3,55 +3,47 @@ package br.com.fullcycle.hexagonal.application.usecases;
 import java.time.Instant;
 
 import br.com.fullcycle.hexagonal.application.UseCase;
+import br.com.fullcycle.hexagonal.application.domain.CustomerId;
+import br.com.fullcycle.hexagonal.application.domain.EventId;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
-import br.com.fullcycle.hexagonal.infrastructure.models.Ticket;
-import br.com.fullcycle.hexagonal.infrastructure.models.TicketStatus;
-import br.com.fullcycle.hexagonal.infrastructure.services.CustomerService;
-import br.com.fullcycle.hexagonal.infrastructure.services.EventService;
+import br.com.fullcycle.hexagonal.application.repositories.CustomerRepository;
+import br.com.fullcycle.hexagonal.application.repositories.EventRepository;
+import br.com.fullcycle.hexagonal.application.repositories.TicketRepository;
 
 public class SubscribeCustomerToEventUseCase
         extends UseCase<SubscribeCustomerToEventUseCase.Input, SubscribeCustomerToEventUseCase.Output> {
-    public record Input(Long eventId, Long customerId) {
+    public record Input(String eventId, String customerId) {
     }
 
-    public record Output(Long eventId, String ticketStatus, Instant reservationDate) {
+    public record Output(String eventId, String ticketStatus, Instant reservationDate) {
     }
 
-    private final CustomerService customerService;
-    private final EventService eventService;
+    private final CustomerRepository customerRepository;
+    private final EventRepository eventRepository;
+    private final TicketRepository ticketRepository;
 
-    public SubscribeCustomerToEventUseCase(final CustomerService customerService, final EventService eventService) {
-        this.customerService = customerService;
-        this.eventService = eventService;
+    public SubscribeCustomerToEventUseCase(
+            final CustomerRepository customerRepository,
+            final EventRepository eventRepository,
+            final TicketRepository ticketRepository) {
+        this.customerRepository = customerRepository;
+        this.eventRepository = eventRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @Override
     public Output execute(final Input input) {
-        final var customer = customerService.findById(input.customerId)
+        final var customer = customerRepository.getById(CustomerId.with(input.customerId))
                 .orElseThrow(() -> new ValidationException("Customer not found"));
 
-        final var event = eventService.findById(input.eventId)
+        final var event = eventRepository.getById(EventId.with(input.eventId))
                 .orElseThrow(() -> new ValidationException("Event not found"));
 
-        eventService.findTicketByEventIdAndCustomerId(input.eventId(), input.customerId)
-                .ifPresent(t -> {
-                    throw new ValidationException("Email already registered");
-                });
+        final var ticket = event.reserveTicket(customer.id());
 
-        if (event.getTotalSpots() < event.getTickets().size() + 1) {
-            throw new ValidationException("Event sold out");
-        }
+        ticketRepository.create(ticket);
+        eventRepository.update(event);
 
-        final var ticket = new Ticket();
-        ticket.setEvent(event);
-        ticket.setCustomer(customer);
-        ticket.setReservedAt(Instant.now());
-        ticket.setStatus(TicketStatus.PENDING);
-
-        event.getTickets().add(ticket);
-
-        eventService.save(event);
-
-        return new Output(event.getId(), ticket.getStatus().name(), ticket.getReservedAt());
+        return new Output(event.id().value(), ticket.status().name(), ticket.reservedAt());
     }
 }

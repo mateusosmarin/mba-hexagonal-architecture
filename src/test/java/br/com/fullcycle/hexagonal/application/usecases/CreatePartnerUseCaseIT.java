@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import br.com.fullcycle.hexagonal.IntegrationTest;
+import br.com.fullcycle.hexagonal.application.domain.Partner;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
-import br.com.fullcycle.hexagonal.infrastructure.models.Partner;
-import br.com.fullcycle.hexagonal.infrastructure.repositories.PartnerRepository;
+import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
 
-public class CreatePartnerUseCaseIT extends IntegrationTest {
+class CreatePartnerUseCaseIT extends IntegrationTest {
     @Autowired
     private CreatePartnerUseCase useCase;
 
@@ -27,7 +27,7 @@ public class CreatePartnerUseCaseIT extends IntegrationTest {
     @DisplayName("Deve criar um parceiro")
     public void testCreate() {
         // given
-        final var expectedCNPJ = "41536538000100";
+        final var expectedCNPJ = "12.345.678/0001-00";
         final var expectedEmail = "john.doe@gmail.com";
         final var expectedName = "John Doe";
 
@@ -47,7 +47,7 @@ public class CreatePartnerUseCaseIT extends IntegrationTest {
     @DisplayName("Não deve cadastrar um parceiro com CNPJ duplicado")
     public void testCreateWithDuplicatedCNPJShouldFail() {
         // given
-        final var expectedCNPJ = "41536538000100";
+        final var expectedCNPJ = "12.345.678/0001-00";
         final var expectedEmail = "john.doe@gmail.com";
         final var expectedName = "John Doe";
         final var expectedError = "Partner already exists";
@@ -67,12 +67,12 @@ public class CreatePartnerUseCaseIT extends IntegrationTest {
     @DisplayName("Não deve cadastrar um parceiro com e-mail duplicado")
     public void testCreateWithDuplicatedEmailShouldFail() {
         // given
-        final var expectedCNPJ = "41536538000100";
+        final var expectedCNPJ = "12.345.678/0001-00";
         final var expectedEmail = "john.doe@gmail.com";
         final var expectedName = "John Doe";
         final var expectedError = "Partner already exists";
 
-        createPartner("41536538000101", expectedEmail, expectedName);
+        createPartner("12.345.678/0001-01", expectedEmail, expectedName);
 
         final var input = new CreatePartnerUseCase.Input(expectedCNPJ, expectedEmail, expectedName);
 
@@ -84,10 +84,6 @@ public class CreatePartnerUseCaseIT extends IntegrationTest {
     }
 
     private Partner createPartner(final String cnpj, final String email, final String name) {
-        final var aPartner = new Partner();
-        aPartner.setCnpj(cnpj);
-        aPartner.setEmail(email);
-        aPartner.setName(name);
-        return partnerRepository.save(aPartner);
+        return partnerRepository.create(Partner.newPartner(name, cnpj, email));
     }
 }
