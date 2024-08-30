@@ -7,10 +7,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.fullcycle.hexagonal.application.domain.Cnpj;
-import br.com.fullcycle.hexagonal.application.domain.Partner;
-import br.com.fullcycle.hexagonal.application.domain.PartnerId;
-import br.com.fullcycle.hexagonal.application.domain.Email;
+import br.com.fullcycle.hexagonal.application.domain.person.Cnpj;
+import br.com.fullcycle.hexagonal.application.domain.partner.Partner;
+import br.com.fullcycle.hexagonal.application.domain.partner.PartnerId;
+import br.com.fullcycle.hexagonal.application.domain.person.Email;
 import br.com.fullcycle.hexagonal.application.repositories.PartnerRepository;
 import br.com.fullcycle.hexagonal.infrastructure.jpa.models.PartnerJpaEntity;
 import br.com.fullcycle.hexagonal.infrastructure.jpa.repositories.PartnerJpaRepository;

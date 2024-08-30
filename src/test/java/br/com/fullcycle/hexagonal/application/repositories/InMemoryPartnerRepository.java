@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import br.com.fullcycle.hexagonal.application.domain.Cnpj;
-import br.com.fullcycle.hexagonal.application.domain.Email;
-import br.com.fullcycle.hexagonal.application.domain.Partner;
-import br.com.fullcycle.hexagonal.application.domain.PartnerId;
+import br.com.fullcycle.hexagonal.application.domain.person.Cnpj;
+import br.com.fullcycle.hexagonal.application.domain.person.Email;
+import br.com.fullcycle.hexagonal.application.domain.partner.Partner;
+import br.com.fullcycle.hexagonal.application.domain.partner.PartnerId;
 
 public class InMemoryPartnerRepository implements PartnerRepository {
     private final Map<String, Partner> partners;
