@@ -3,10 +3,10 @@ package br.com.fullcycle.hexagonal.infrastructure.jpa.models;
 import java.util.Objects;
 import java.util.UUID;
 
-import br.com.fullcycle.hexagonal.application.domain.CustomerId;
-import br.com.fullcycle.hexagonal.application.domain.EventId;
-import br.com.fullcycle.hexagonal.application.domain.EventTicket;
-import br.com.fullcycle.hexagonal.application.domain.TicketId;
+import br.com.fullcycle.hexagonal.application.domain.customer.CustomerId;
+import br.com.fullcycle.hexagonal.application.domain.event.EventId;
+import br.com.fullcycle.hexagonal.application.domain.event.EventTicket;
+import br.com.fullcycle.hexagonal.application.domain.event.ticket.TicketId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
