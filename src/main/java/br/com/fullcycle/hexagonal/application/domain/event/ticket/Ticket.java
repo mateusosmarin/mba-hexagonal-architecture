@@ -1,14 +1,21 @@
 package br.com.fullcycle.hexagonal.application.domain.event.ticket;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
+import br.com.fullcycle.hexagonal.application.domain.DomainEvent;
 import br.com.fullcycle.hexagonal.application.domain.customer.CustomerId;
 import br.com.fullcycle.hexagonal.application.domain.event.EventId;
+import br.com.fullcycle.hexagonal.application.domain.event.EventTicketId;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 
 public class Ticket {
     private final TicketId id;
+    private final Set<DomainEvent> domainEvents;
+
     private CustomerId customerId;
     private EventId eventId;
     private TicketStatus status;
@@ -22,6 +29,7 @@ public class Ticket {
             final Instant paidAt,
             final Instant reservedAt) {
         this.id = id;
+        this.domainEvents = new HashSet<>();
         this.setCustomerId(customerId);
         this.setEventId(eventId);
         this.setStatus(status);
@@ -32,6 +40,13 @@ public class Ticket {
 
     public static Ticket newTicket(final CustomerId customerId, final EventId eventId) {
         return new Ticket(TicketId.unique(), customerId, eventId, TicketStatus.PENDING, null, Instant.now());
+    }
+
+    public static Ticket newTicket(final EventTicketId eventTicketId, final CustomerId customerId,
+            final EventId eventId) {
+        final var ticket = newTicket(customerId, eventId);
+        ticket.domainEvents.add(new TicketCreated(ticket.id(), eventTicketId, eventId, customerId));
+        return ticket;
     }
 
     public TicketId id() {
@@ -103,5 +118,9 @@ public class Ticket {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Set<DomainEvent> allDomainEvents() {
+        return Collections.unmodifiableSet(domainEvents);
     }
 }

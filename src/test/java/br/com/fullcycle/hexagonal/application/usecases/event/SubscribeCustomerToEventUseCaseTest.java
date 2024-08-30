@@ -10,7 +10,6 @@ import br.com.fullcycle.hexagonal.application.domain.customer.CustomerId;
 import br.com.fullcycle.hexagonal.application.domain.event.Event;
 import br.com.fullcycle.hexagonal.application.domain.event.EventId;
 import br.com.fullcycle.hexagonal.application.domain.partner.Partner;
-import br.com.fullcycle.hexagonal.application.domain.event.ticket.TicketStatus;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 import br.com.fullcycle.hexagonal.application.repositories.CustomerRepository;
 import br.com.fullcycle.hexagonal.application.repositories.EventRepository;
@@ -31,8 +30,7 @@ class SubscribeCustomerToEventUseCaseTest {
         ticketRepository = new InMemoryTicketRepository();
         useCase = new SubscribeCustomerToEventUseCase(
                 customerRepository,
-                eventRepository,
-                ticketRepository);
+                eventRepository);
     }
 
     @AfterEach
@@ -63,7 +61,6 @@ class SubscribeCustomerToEventUseCaseTest {
         // then
         Assertions.assertEquals(event.id().value(), output.eventId());
         Assertions.assertNotNull(output.reservationDate());
-        Assertions.assertEquals(TicketStatus.PENDING.name(), output.ticketStatus());
         Assertions.assertEquals(expectedTicketsSize, updatedEvent.get().allTickets().size());
     }
 
@@ -117,11 +114,11 @@ class SubscribeCustomerToEventUseCaseTest {
         final var customer = Customer.newCustomer("John Doe", "123.456.789-01", "john.doe@gmail.com");
         final var partner = Partner.newPartner("John Doe", "12.345.678/0001-00", "john.doe@gmail.com");
         final var event = Event.newEvent("Disney", "2024-08-01", 10, partner);
-        final var ticket = event.reserveTicket(customer.id());
+
+        event.reserveTicket(customer.id());
 
         customerRepository.create(customer);
         eventRepository.create(event);
-        ticketRepository.create(ticket);
 
         final var input = new SubscribeCustomerToEventUseCase.Input(event.id().value(), customer.id().value());
 
@@ -142,12 +139,12 @@ class SubscribeCustomerToEventUseCaseTest {
         final var anotherCustomer = Customer.newCustomer("Jane Doe", "123.456.789-02", "jane.doe@gmail.com");
         final var partner = Partner.newPartner("John Doe", "12.345.678/0001-00", "john.doe@gmail.com");
         final var event = Event.newEvent("Disney", "2024-08-01", 1, partner);
-        final var ticket = event.reserveTicket(anotherCustomer.id());
+
+        event.reserveTicket(anotherCustomer.id());
 
         customerRepository.create(customer);
         customerRepository.create(anotherCustomer);
         eventRepository.create(event);
-        ticketRepository.create(ticket);
 
         final var input = new SubscribeCustomerToEventUseCase.Input(event.id().value(), customer.id().value());
 

@@ -14,7 +14,6 @@ import br.com.fullcycle.hexagonal.application.domain.customer.CustomerId;
 import br.com.fullcycle.hexagonal.application.domain.event.Event;
 import br.com.fullcycle.hexagonal.application.domain.event.EventId;
 import br.com.fullcycle.hexagonal.application.domain.partner.Partner;
-import br.com.fullcycle.hexagonal.application.domain.event.ticket.TicketStatus;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 import br.com.fullcycle.hexagonal.application.repositories.CustomerRepository;
 import br.com.fullcycle.hexagonal.application.repositories.EventRepository;
@@ -72,7 +71,6 @@ class SubscribeCustomerToEventUseCaseIT extends IntegrationTest {
         // then
         Assertions.assertEquals(eventId, output.eventId());
         Assertions.assertNotNull(output.reservationDate());
-        Assertions.assertEquals(TicketStatus.PENDING.name(), output.ticketStatus());
     }
 
     @Test

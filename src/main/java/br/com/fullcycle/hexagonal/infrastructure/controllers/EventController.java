@@ -5,7 +5,6 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,7 +44,6 @@ public class EventController {
         }
     }
 
-    @Transactional
     @PostMapping(value = "/{id}/subscribe")
     public ResponseEntity<?> subscribe(@PathVariable final String id, @RequestBody final SubscribeDTO dto) {
         try {

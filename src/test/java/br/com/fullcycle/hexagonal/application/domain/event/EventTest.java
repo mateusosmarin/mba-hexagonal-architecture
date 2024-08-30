@@ -7,7 +7,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import br.com.fullcycle.hexagonal.application.domain.customer.Customer;
-import br.com.fullcycle.hexagonal.application.domain.event.ticket.TicketStatus;
 import br.com.fullcycle.hexagonal.application.domain.partner.Partner;
 import br.com.fullcycle.hexagonal.application.exceptions.ValidationException;
 
@@ -74,7 +73,7 @@ class EventTest {
         // given
         final var expectedTickets = 1;
         final var expectedTicketOrder = 1;
-        final var expectedTicketStatus = TicketStatus.PENDING;
+        final var expectedDomainEvent = "event-ticket.reserved";
 
         final var customer = Customer.newCustomer("John Doe", "123.456.789-01", "john.doe@gmail.com");
         final var partner = Partner.newPartner("John Doe", "12.345.678/0001-00", "john.doe@gmail.com");
@@ -85,16 +84,17 @@ class EventTest {
 
         // then
         Assertions.assertNotNull(ticket.id());
+        Assertions.assertNull(ticket.ticketId());
         Assertions.assertEquals(event.id(), ticket.eventId());
         Assertions.assertEquals(customer.id(), ticket.customerId());
-        Assertions.assertEquals(expectedTicketStatus, ticket.status());
         Assertions.assertEquals(expectedTickets, event.allTickets().size());
 
         final var eventTicket = event.allTickets().iterator().next();
-        Assertions.assertEquals(eventTicket.ticketId(), ticket.id());
+        Assertions.assertNull(eventTicket.ticketId());
         Assertions.assertEquals(expectedTicketOrder, eventTicket.ordering());
-        Assertions.assertNotNull(ticket.reservedAt());
-        Assertions.assertNull(ticket.paidAt());
+
+        final var domainEvent = event.allDomainEvents().iterator().next();
+        Assertions.assertEquals(domainEvent.type(), expectedDomainEvent);
     }
 
     @Test

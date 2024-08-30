@@ -6,6 +6,7 @@ import java.util.UUID;
 import br.com.fullcycle.hexagonal.application.domain.customer.CustomerId;
 import br.com.fullcycle.hexagonal.application.domain.event.EventId;
 import br.com.fullcycle.hexagonal.application.domain.event.EventTicket;
+import br.com.fullcycle.hexagonal.application.domain.event.EventTicketId;
 import br.com.fullcycle.hexagonal.application.domain.event.ticket.TicketId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +19,8 @@ import jakarta.persistence.Table;
 public class EventTicketJpaEntity {
 
     @Id
+    private UUID id;
+
     private UUID ticketId;
 
     private UUID customerId;
@@ -31,30 +34,42 @@ public class EventTicketJpaEntity {
     }
 
     public EventTicketJpaEntity(
-            final UUID ticketId,
+            final UUID id,
             final UUID customerId,
+            final UUID ticketId,
             final int ordering,
             final EventJpaEntity event) {
-        this.ticketId = ticketId;
+        this.id = id;
         this.customerId = customerId;
+        this.ticketId = ticketId;
         this.ordering = ordering;
         this.event = event;
     }
 
     public static EventTicketJpaEntity of(final EventJpaEntity event, final EventTicket eventTicket) {
         return new EventTicketJpaEntity(
-                UUID.fromString(eventTicket.ticketId().value()),
+                UUID.fromString(eventTicket.id().value()),
                 UUID.fromString(eventTicket.customerId().value()),
+                eventTicket.ticketId() != null ? UUID.fromString(eventTicket.ticketId().value()) : null,
                 eventTicket.ordering(),
                 event);
     }
 
     public EventTicket toEventTicket() {
         return new EventTicket(
-                TicketId.with(ticketId.toString()),
+                EventTicketId.with(id.toString()),
                 EventId.with(event.getId().toString()),
                 CustomerId.with(customerId.toString()),
+                ticketId != null ? TicketId.with(ticketId.toString()) : null,
                 ordering);
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(final UUID id) {
+        this.id = id;
     }
 
     public UUID getTicketId() {
@@ -96,14 +111,11 @@ public class EventTicketJpaEntity {
         if (o == null || getClass() != o.getClass())
             return false;
         EventTicketJpaEntity that = (EventTicketJpaEntity) o;
-        return ordering == that.ordering
-                && Objects.equals(ticketId, that.ticketId)
-                && Objects.equals(customerId, that.customerId)
-                && Objects.equals(event.getId(), that.event.getId());
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ticketId, customerId, ordering, event.getId());
+        return Objects.hash(id);
     }
 }
